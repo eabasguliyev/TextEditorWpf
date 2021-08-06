@@ -18,6 +18,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Menu Grid.Row="0">
@@ -29,13 +30,18 @@
                 <MenuItem Header="_Close" Command="{Binding CloseCommand}"/>
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem Header="Back" Command="{Binding BackCommand}" InputGestureText="Ctrl+U"/>
-                <MenuItem Header="Forward" Command="{Binding ForwardCommand}" InputGestureText="Ctrl+R"/>
+                <MenuItem Header="_Back" Command="{Binding BackCommand}" InputGestureText="Ctrl+U"/>
+                <MenuItem Header="_Forward" Command="{Binding ForwardCommand}" InputGestureText="Ctrl+R"/>
             </MenuItem>
         </Menu>
-        <Grid Grid.Row="1">
-            <TextBox AcceptsReturn="True" x:Name="TextBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                     IsUndoEnabled="False"/>
-        </Grid>
+        <TextBox Grid.Row="1" AcceptsReturn="True" x:Name="TextBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                 IsUndoEnabled="False"/>
+
+        <StatusBar Grid.Row="2">
+            <TextBlock>
+                <Run Text="Word count: "/>
+                <Run Text="{Binding WordCount}"/>
+            </TextBlock>
+        </StatusBar>
     </Grid>
 </Window>

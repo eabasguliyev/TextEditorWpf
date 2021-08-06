@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Prism.Commands;
@@ -25,6 +26,7 @@ namespace TextEditor.ViewModels
 
         private string _filePath;
         private string _tmpFilePath;
+        private int _wordCount;
 
         public MainWindowViewModel(ISnapshotCare<string> snapshotCare, Func<string, ISaveFileDialogService> saveFileDialogServiceCreator, 
             Func<string, IOpenFileDialogService> openFileDialogServiceCreator, IEventAggregator eventAggregator, IMessageDialogService messageDialogService)
@@ -60,6 +62,16 @@ namespace TextEditor.ViewModels
         public string FileName => ParseFileNameFromPath(_filePath);
         public bool HasChanges { get; set; }
 
+        public int WordCount
+        {
+            get => _wordCount;
+            set
+            {
+                _wordCount = value;
+                OnPropertyChanged();
+            }
+        }
+
         public ICommand SaveCommand { get; }
         public ICommand OpenCommand { get; }
         public ICommand NewFileCommand { get; }
@@ -70,7 +82,11 @@ namespace TextEditor.ViewModels
         public void OnTextChanged()
         {
             _snapshotCare.CreateSnapshot(Text);
+
             HasChanges = true;
+            
+            CountWords();
+
             AutoSave();
         }
 
@@ -79,6 +95,25 @@ namespace TextEditor.ViewModels
             _snapshotCare.CreateSnapshot("");
 
             await Task.Run(CreateTempFile);
+        }
+
+        private void CountWords()
+        {
+            if (Text == null)
+            {
+                WordCount = 0;
+                return;
+            }
+
+            WordCount = Text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Count(w =>
+            {
+                if (w.Length == 1 && (char.IsDigit(w[0]) || char.IsSeparator(w[0]) ||
+                                      char.IsNumber(w[0]) || char.IsDigit(w[0]) ||
+                                      char.IsPunctuation(w[0]) || char.IsSymbol(w[0])))
+                    return false;
+
+                return true;
+            });
         }
 
         private void Close()
@@ -96,6 +131,10 @@ namespace TextEditor.ViewModels
                 if (result == MessageDialogResult.Yes)
                 {
                     SaveCommand.Execute(null);
+                }
+                else
+                {
+                    DeleteOldTempFile(_tmpFilePath);
                 }
             }
         }
