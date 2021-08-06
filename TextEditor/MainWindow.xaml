@@ -25,6 +25,8 @@
                 <MenuItem Header="_New" Command="{Binding NewFileCommand}" InputGestureText="Ctrl+N"/>
                 <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGestureText="Ctrl+O"/>
                 <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGestureText="Ctrl+S"/>
+                <Separator/>
+                <MenuItem Header="_Close" Command="{Binding CloseCommand}"/>
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem Header="Back" Command="{Binding BackCommand}" InputGestureText="Ctrl+U"/>

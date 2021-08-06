@@ -3,8 +3,13 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Prism.Commands;
+using Prism.Events;
+using TextEditor.Enums;
+using TextEditor.Events;
 using TextEditor.Snapshot;
 using TextEditor.Views.Services;
+using TextEditor.Views.Services.FileDialogServices;
+using TextEditor.Views.Services.MessageDialogServices;
 
 namespace TextEditor.ViewModels
 {
@@ -13,6 +18,8 @@ namespace TextEditor.ViewModels
         private readonly ISnapshotCare<string> _snapshotCare;
         private readonly Func<string, ISaveFileDialogService> _saveFileDialogServiceCreator;
         private readonly Func<string, IOpenFileDialogService> _openFileDialogServiceCreator;
+        private readonly IEventAggregator _eventAggregator;
+        private readonly IMessageDialogService _messageDialogService;
         private string _text;
         private readonly string _filter;
 
@@ -20,11 +27,14 @@ namespace TextEditor.ViewModels
         private string _tmpFilePath;
 
         public MainWindowViewModel(ISnapshotCare<string> snapshotCare, Func<string, ISaveFileDialogService> saveFileDialogServiceCreator, 
-            Func<string, IOpenFileDialogService> openFileDialogServiceCreator)
+            Func<string, IOpenFileDialogService> openFileDialogServiceCreator, IEventAggregator eventAggregator, IMessageDialogService messageDialogService)
         {
             _snapshotCare = snapshotCare;
             _saveFileDialogServiceCreator = saveFileDialogServiceCreator;
             _openFileDialogServiceCreator = openFileDialogServiceCreator;
+            _eventAggregator = eventAggregator;
+            _messageDialogService = messageDialogService;
+
             _filter = "Text files (*.txt)|*.txt";
 
             SaveCommand = new DelegateCommand(Save);
@@ -32,6 +42,9 @@ namespace TextEditor.ViewModels
             NewFileCommand = new DelegateCommand(CreateNewFile);
             BackCommand = new DelegateCommand(Back);
             ForwardCommand = new DelegateCommand(Forward);
+            CloseCommand = new DelegateCommand(Close);
+
+            _eventAggregator.GetEvent<OnSaveChangesEvent>().Subscribe(OnSaveChanges);
         }
 
         public string Text
@@ -45,17 +58,19 @@ namespace TextEditor.ViewModels
         }
 
         public string FileName => ParseFileNameFromPath(_filePath);
+        public bool HasChanges { get; set; }
 
         public ICommand SaveCommand { get; }
         public ICommand OpenCommand { get; }
         public ICommand NewFileCommand { get; }
+        public ICommand CloseCommand { get; }
         public ICommand BackCommand { get; }
         public ICommand ForwardCommand { get; }
 
         public void OnTextChanged()
         {
             _snapshotCare.CreateSnapshot(Text);
-
+            HasChanges = true;
             AutoSave();
         }
 
@@ -64,6 +79,25 @@ namespace TextEditor.ViewModels
             _snapshotCare.CreateSnapshot("");
 
             await Task.Run(CreateTempFile);
+        }
+
+        private void Close()
+        {
+            _eventAggregator.GetEvent<OnCloseWindowViewEvent>().Publish();
+        }
+
+        private void OnSaveChanges()
+        {
+            if (HasChanges)
+            {
+                var result =
+                    _messageDialogService.ShowYesNoDialog("You've made changes. Do you want to save?", "Information");
+
+                if (result == MessageDialogResult.Yes)
+                {
+                    SaveCommand.Execute(null);
+                }
+            }
         }
 
         private async void AutoSave()
@@ -82,6 +116,7 @@ namespace TextEditor.ViewModels
                 DeleteOldTempFile(_tmpFilePath);
                 CreateTempFile();
 
+                HasChanges = false;
                 await SaveData(_filePath, Text);
             }
         }

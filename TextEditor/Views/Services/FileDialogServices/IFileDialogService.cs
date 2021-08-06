@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-
-namespace TextEditor.Views.Services
+﻿namespace TextEditor.Views.Services.FileDialogServices
 {
     public interface IFileDialogService
     {

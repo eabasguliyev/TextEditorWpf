@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
 
-namespace TextEditor.Views.Services
+namespace TextEditor.Views.Services.FileDialogServices
 {
     public class OpenFileDialogService:IOpenFileDialogService
     {

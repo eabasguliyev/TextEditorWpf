@@ -9,7 +9,6 @@
   <ItemGroup>
     <Folder Include="Snapshot\" />
     <Folder Include="ViewModels\" />
-    <Folder Include="Views\Services\" />
   </ItemGroup>
 
   <ItemGroup>

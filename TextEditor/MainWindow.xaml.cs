@@ -1,5 +1,8 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
+using Prism.Events;
+using TextEditor.Events;
 using TextEditor.ViewModels;
 
 namespace TextEditor
@@ -10,16 +13,28 @@ namespace TextEditor
     public partial class MainWindow : Window
     {
         private readonly IMainWindowViewModel _viewModel;
+        private readonly IEventAggregator _eventAggregator;
 
-        public MainWindow(IMainWindowViewModel viewModel)
+        public MainWindow(IMainWindowViewModel viewModel, IEventAggregator eventAggregator)
         {
-            _viewModel = viewModel;
             InitializeComponent();
+
+            _viewModel = viewModel;
+            _eventAggregator = eventAggregator;
+
             this.DataContext = _viewModel;
 
             this.Loaded += OnLoaded;
 
             this.TextBox.TextChanged += TextBoxOnTextChanged;
+
+
+            _eventAggregator.GetEvent<OnCloseWindowViewEvent>().Subscribe(OnCloseWindowView);
+        }
+
+        private void OnCloseWindowView()
+        {
+            this.Close();
         }
 
         private void TextBoxOnTextChanged(object sender, TextChangedEventArgs e)
@@ -30,6 +45,11 @@ namespace TextEditor
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             _viewModel.LoadAsync();
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            _eventAggregator.GetEvent<OnSaveChangesEvent>().Publish();
         }
     }
 }
