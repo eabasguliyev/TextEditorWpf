@@ -35,12 +35,12 @@ namespace TextEditor.ViewModels
             }
         }
 
-        public string FilePath { get; set; }
-        public string TmpFilePath { get; set; }
+        private string _filePath;
+        private string _tmpFilePath;
 
         public ICommand SaveCommand { get; }
         public ICommand OpenCommand { get; }
-        public ICommand NewFileCommand { get;}
+        public ICommand NewFileCommand { get; }
 
 
         public async void LoadAsync()
@@ -50,40 +50,48 @@ namespace TextEditor.ViewModels
 
         public async void AutoSave()
         {
-            await SaveData(TmpFilePath, Text);
+            await SaveData(_tmpFilePath, Text);
         }
 
         private async void Save()
         {
-            FilePath = GetFilePath(_saveFileDialogServiceCreator, _filter);
+            _filePath = GetFilePath(_saveFileDialogServiceCreator, _filter);
 
-            if (FilePath != null)
+            if (_filePath != null)
             {
+                DeleteOldTempFile(_tmpFilePath);
                 CreateTempFile();
 
-                await SaveData(FilePath, Text);
+                await SaveData(_filePath, Text);
             }
+        }
+
+        private void DeleteOldTempFile(string tmpFilePath)
+        {
+            File.Delete(tmpFilePath);
         }
 
         private async void Open()
         {
-            FilePath = GetFilePath(_openFileDialogServiceCreator, _filter);
+            _filePath = GetFilePath(_openFileDialogServiceCreator, _filter);
 
-            if (FilePath != null)
+            if (_filePath != null)
             {
+                DeleteOldTempFile(_tmpFilePath);
                 CreateTempFile();
 
-                Text = await ReadData(FilePath);
+                Text = await ReadData(_filePath);
             }
         }
 
         private void CreateNewFile()
         {
-            FilePath = GetFilePath(_saveFileDialogServiceCreator, _filter);
+            _filePath = GetFilePath(_saveFileDialogServiceCreator, _filter);
 
-            if (FilePath != null)
+            if (_filePath != null)
             {
-                CreateEmptyFile(FilePath);
+                DeleteOldTempFile(_tmpFilePath);
+                CreateEmptyFile(_filePath);
                 CreateTempFile();
             }
         }
@@ -103,13 +111,13 @@ namespace TextEditor.ViewModels
 
             CreateTempDirectory(directoryName);
 
-            var fileName = ParseFileNameFromPath(FilePath);
+            var fileName = ParseFileNameFromPath(_filePath);
 
-            TmpFilePath = string.IsNullOrWhiteSpace(fileName) ? $@"{directoryName}\{Guid.NewGuid() + ".txt"}" : $@"{directoryName}\{"tmp_" + fileName}";
+            _tmpFilePath = string.IsNullOrWhiteSpace(fileName) ? $@"{directoryName}\{Guid.NewGuid() + ".txt"}" : $@"{directoryName}\{"tmp_" + fileName}";
 
-            CreateEmptyFile(TmpFilePath);
+            CreateEmptyFile(_tmpFilePath);
 
-            File.SetAttributes(TmpFilePath, File.GetAttributes(TmpFilePath) | FileAttributes.Hidden);
+            File.SetAttributes(_tmpFilePath, File.GetAttributes(_tmpFilePath) | FileAttributes.Hidden);
         }
 
         private static void CreateTempDirectory(string directoryName)
@@ -135,7 +143,9 @@ namespace TextEditor.ViewModels
 
         private async Task SaveData(string filePath, string text)
         {
+            File.SetAttributes(_tmpFilePath, FileAttributes.Normal);
             await File.WriteAllTextAsync(filePath, text);
+            File.SetAttributes(_tmpFilePath, File.GetAttributes(_tmpFilePath) | FileAttributes.Hidden);
         }
 
         private async Task<string> ReadData(string filePath)
