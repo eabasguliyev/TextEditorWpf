@@ -6,11 +6,13 @@
         xmlns:local="clr-namespace:TextEditor"
         mc:Ignorable="d"
         FontSize="15"
-        Title="Notepad" Height="450" Width="800">
+        Title="{Binding FileName, Mode=OneWay, TargetNullValue='Notepad'}" Height="450" Width="800">
     <Window.InputBindings>
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewFileCommand}"/>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}"/>
+        <KeyBinding Key="U" Modifiers="Control" Command="{Binding BackCommand}"/>
+        <KeyBinding Key="R" Modifiers="Control" Command="{Binding ForwardCommand}"/>
     </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -24,9 +26,14 @@
                 <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGestureText="Ctrl+O"/>
                 <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGestureText="Ctrl+S"/>
             </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="Back" Command="{Binding BackCommand}" InputGestureText="Ctrl+U"/>
+                <MenuItem Header="Forward" Command="{Binding ForwardCommand}" InputGestureText="Ctrl+R"/>
+            </MenuItem>
         </Menu>
         <Grid Grid.Row="1">
-            <TextBox AcceptsReturn="True" x:Name="TextBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox AcceptsReturn="True" x:Name="TextBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
+                     IsUndoEnabled="False"/>
         </Grid>
     </Grid>
 </Window>

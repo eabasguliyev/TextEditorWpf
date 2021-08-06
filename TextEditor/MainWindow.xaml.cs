@@ -24,7 +24,7 @@ namespace TextEditor
 
         private void TextBoxOnTextChanged(object sender, TextChangedEventArgs e)
         {
-            _viewModel.AutoSave();
+            _viewModel.OnTextChanged();
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)

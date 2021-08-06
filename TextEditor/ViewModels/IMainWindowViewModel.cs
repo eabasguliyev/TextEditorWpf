@@ -3,6 +3,6 @@
     public interface IMainWindowViewModel
     {
         void LoadAsync();
-        void AutoSave();
+        void OnTextChanged();
     }
 }
