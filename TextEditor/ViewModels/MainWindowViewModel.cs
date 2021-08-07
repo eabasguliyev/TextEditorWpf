@@ -9,6 +9,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using Prism.Commands;
 using Prism.Events;
+using TextEditor.Data;
 using TextEditor.DatabaseSchemaBuilder;
 using TextEditor.Enums;
 using TextEditor.Events;
@@ -28,6 +29,7 @@ namespace TextEditor.ViewModels
         private readonly IEventAggregator _eventAggregator;
         private readonly IMessageDialogService _messageDialogService;
         private readonly SqlConnection _sqlConnection;
+        private readonly IWordDataService _wordDataService;
         private string _text;
         private readonly string _filter;
 
@@ -40,7 +42,7 @@ namespace TextEditor.ViewModels
 
         public MainWindowViewModel(ISnapshotCare<string> snapshotCare, Func<string, ISaveFileDialogService> saveFileDialogServiceCreator, 
             Func<string, IOpenFileDialogService> openFileDialogServiceCreator, IEventAggregator eventAggregator, IMessageDialogService messageDialogService,
-            SqlConnection sqlConnection)
+            SqlConnection sqlConnection, IWordDataService wordDataService)
         {
             _snapshotCare = snapshotCare;
             _saveFileDialogServiceCreator = saveFileDialogServiceCreator;
@@ -48,6 +50,7 @@ namespace TextEditor.ViewModels
             _eventAggregator = eventAggregator;
             _messageDialogService = messageDialogService;
             _sqlConnection = sqlConnection;
+            _wordDataService = wordDataService;
 
             _filter = "Text files (*.txt)|*.txt";
 
@@ -153,6 +156,9 @@ namespace TextEditor.ViewModels
         {
             await CreateDatabaseSchema();
 
+            //var words = await _wordDataService.GetAllAsync();
+            //var word = await _wordDataService.GetByNameAsync("necesen");
+
             _snapshotCare.CreateSnapshot("");
 
             await Task.Run(CreateTempFile);
@@ -220,7 +226,7 @@ namespace TextEditor.ViewModels
                 return;
             }
 
-            var wordCounter = new WordCounter();
+            var wordCounter = new WordOperation();
 
             WordCount = wordCounter.GetWordCount(Text);
         }
@@ -247,6 +253,8 @@ namespace TextEditor.ViewModels
 
         private async void AutoSave()
         {
+            if (_tmpFilePath == null)
+                return;
             await SaveData(_tmpFilePath, Text);
         }
 

@@ -9,8 +9,8 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="DatabaseSchemaBuilder\" />
+    <Folder Include="Models\" />
     <Folder Include="Snapshot\" />
-    <Folder Include="ViewModels\Services\" />
   </ItemGroup>
 
   <ItemGroup>
