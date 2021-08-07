@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Net.Mime;
 
 namespace TextEditor.ViewModels.Services
 {
@@ -12,11 +11,11 @@ namespace TextEditor.ViewModels.Services
         }
         private string ClearText(string text)
         {
-            var replaced = text.Replace("\r\n", " ");
+            var replaced = text.Replace('\r', ' ').Replace('\n', ' ');
 
-            foreach (var t in text.Where(char.IsPunctuation))
+            foreach (var t in replaced.Where(char.IsPunctuation))
             {
-                replaced = text.Replace(t, ' ');
+                replaced = replaced.Replace(t, ' ');
             }
 
             return replaced;

@@ -176,8 +176,8 @@ namespace TextEditor.ViewModels
                 {
                     Save();
                 }
-                DeleteOldTempFile(_tmpFilePath);
             }
+            DeleteOldTempFile(_tmpFilePath);
         }
 
         private async void AutoSave()
