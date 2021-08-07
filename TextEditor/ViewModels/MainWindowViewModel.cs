@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Data.Common;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Dapper;
+using Microsoft.Extensions.Configuration;
 using Prism.Commands;
 using Prism.Events;
+using TextEditor.DatabaseSchemaBuilder;
 using TextEditor.Enums;
 using TextEditor.Events;
 using TextEditor.Snapshot;
@@ -22,6 +27,7 @@ namespace TextEditor.ViewModels
         private readonly Func<string, IOpenFileDialogService> _openFileDialogServiceCreator;
         private readonly IEventAggregator _eventAggregator;
         private readonly IMessageDialogService _messageDialogService;
+        private readonly SqlConnection _sqlConnection;
         private string _text;
         private readonly string _filter;
 
@@ -33,13 +39,15 @@ namespace TextEditor.ViewModels
         private int _position;
 
         public MainWindowViewModel(ISnapshotCare<string> snapshotCare, Func<string, ISaveFileDialogService> saveFileDialogServiceCreator, 
-            Func<string, IOpenFileDialogService> openFileDialogServiceCreator, IEventAggregator eventAggregator, IMessageDialogService messageDialogService)
+            Func<string, IOpenFileDialogService> openFileDialogServiceCreator, IEventAggregator eventAggregator, IMessageDialogService messageDialogService,
+            SqlConnection sqlConnection)
         {
             _snapshotCare = snapshotCare;
             _saveFileDialogServiceCreator = saveFileDialogServiceCreator;
             _openFileDialogServiceCreator = openFileDialogServiceCreator;
             _eventAggregator = eventAggregator;
             _messageDialogService = messageDialogService;
+            _sqlConnection = sqlConnection;
 
             _filter = "Text files (*.txt)|*.txt";
 
@@ -114,6 +122,7 @@ namespace TextEditor.ViewModels
         public ICommand BackCommand { get; }
         public ICommand ForwardCommand { get; }
 
+
         public void OnTextChanged()
         {
             _snapshotCare.CreateSnapshot(Text);
@@ -142,9 +151,65 @@ namespace TextEditor.ViewModels
 
         public async void LoadAsync()
         {
+            await CreateDatabaseSchema();
+
             _snapshotCare.CreateSnapshot("");
 
             await Task.Run(CreateTempFile);
+        }
+
+        private async Task CreateDatabaseSchema()
+        {
+            var dbName = "TextEditor";
+
+            var dbBuilder = new DatabaseBuilder();
+
+            var dbString = dbBuilder.SetIfNotExist(dbName)
+                .SetDatabaseName(dbName)
+                .Build();
+            
+            await _sqlConnection.OpenAsync();
+
+            await _sqlConnection.ExecuteAsync(dbString);
+
+            await _sqlConnection.CloseAsync();
+
+            _sqlConnection.ConnectionString += $"Initial Catalog = {dbName};";
+
+            await _sqlConnection.OpenAsync();
+
+            var columnBuilder = new ColumnBuilder();
+
+            var idColumnStr = columnBuilder.SetColumnName("Id")
+                .SetColumnType(DataType.Int)
+                .SetNotNull()
+                .SetIdentity()
+                .SetPrimaryKey().Build();
+
+            var wordNameColumnStr = columnBuilder.Reset()
+                .SetColumnName("WordName")
+                .SetColumnType(DataType.Varchar, 255)
+                .Build();
+
+            var tableBuilder = new TableBuilder();
+
+            var tableSchemaStr = tableBuilder.SetIfNotExist("Words")
+                .SetTableName("Words")
+                .AddColumn(idColumnStr)
+                .AddColumn(wordNameColumnStr)
+                .Build();
+
+            await _sqlConnection.ExecuteAsync(tableSchemaStr);
+
+            var indexBuilder = new IndexBuilder();
+
+            var wordIndexStr = indexBuilder.SetIfNotExist("Words", "WordName")
+                .CreateIndex("Words", "WordName", IndexType.NonClustered)
+                .Build();
+
+            await _sqlConnection.ExecuteAsync(wordIndexStr);
+
+            await _sqlConnection.CloseAsync();
         }
 
         private void CountWords()

@@ -1,8 +1,8 @@
-﻿using Autofac;
+﻿using System.Data.SqlClient;
+using Autofac;
 using Prism.Events;
 using TextEditor.Snapshot;
 using TextEditor.ViewModels;
-using TextEditor.Views.Services;
 using TextEditor.Views.Services.FileDialogServices;
 using TextEditor.Views.Services.MessageDialogServices;
 
@@ -25,6 +25,8 @@ namespace TextEditor.Startup
             containerBuilder.RegisterType<EventAggregator>().As<IEventAggregator>().SingleInstance();
 
             containerBuilder.RegisterType<MessageDialogService>().As<IMessageDialogService>().SingleInstance();
+
+            containerBuilder.RegisterType<SqlConnection>().AsSelf().SingleInstance();
             return containerBuilder.Build();
         }
     }
