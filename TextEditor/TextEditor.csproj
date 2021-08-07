@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <Folder Include="Snapshot\" />
-    <Folder Include="ViewModels\" />
+    <Folder Include="ViewModels\Services\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -8,6 +8,7 @@ using Prism.Events;
 using TextEditor.Enums;
 using TextEditor.Events;
 using TextEditor.Snapshot;
+using TextEditor.ViewModels.Services;
 using TextEditor.Views.Services;
 using TextEditor.Views.Services.FileDialogServices;
 using TextEditor.Views.Services.MessageDialogServices;
@@ -154,16 +155,9 @@ namespace TextEditor.ViewModels
                 return;
             }
 
-            var text = Text.Replace("\r\n", " ").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            
-            WordCount = text.Count(w =>
-            {
-                if (w.Length == 1 && (char.IsDigit(w[0]) || char.IsSeparator(w[0]) ||
-                                      char.IsNumber(w[0]) || char.IsDigit(w[0]) ||
-                                      char.IsPunctuation(w[0]) || char.IsSymbol(w[0])))
-                    return false;
-                return true;
-            });
+            var wordCounter = new WordCounter();
+
+            WordCount = wordCounter.GetWordCount(Text);
         }
 
         private void Close()
