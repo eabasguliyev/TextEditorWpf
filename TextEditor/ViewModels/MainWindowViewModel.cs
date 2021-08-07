@@ -154,17 +154,14 @@ namespace TextEditor.ViewModels
                 return;
             }
 
-            WordCount = Text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Count(w =>
+            var text = Text.Replace("\r\n", " ").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            
+            WordCount = text.Count(w =>
             {
                 if (w.Length == 1 && (char.IsDigit(w[0]) || char.IsSeparator(w[0]) ||
                                       char.IsNumber(w[0]) || char.IsDigit(w[0]) ||
                                       char.IsPunctuation(w[0]) || char.IsSymbol(w[0])))
                     return false;
-
-
-                if (w.Contains('\r') || w.Contains('\n'))
-                    return false;
-
                 return true;
             });
         }
@@ -183,12 +180,9 @@ namespace TextEditor.ViewModels
 
                 if (result == MessageDialogResult.Yes)
                 {
-                    SaveCommand.Execute(null);
+                    Save();
                 }
-                else
-                {
-                    DeleteOldTempFile(_tmpFilePath);
-                }
+                DeleteOldTempFile(_tmpFilePath);
             }
         }
 
