@@ -42,6 +42,18 @@
                 <Run Text="Word count: "/>
                 <Run Text="{Binding WordCount}"/>
             </TextBlock>
+            <TextBlock>
+                <Run Text="Line: "/>
+                <Run Text="{Binding Line}"/>
+            </TextBlock>
+            <TextBlock>
+                <Run Text="Column: "/>
+                <Run Text="{Binding Column}"/>
+            </TextBlock>
+            <TextBlock>
+                <Run Text="Position: "/>
+                <Run Text="{Binding Position}"/>
+            </TextBlock>
         </StatusBar>
     </Grid>
 </Window>

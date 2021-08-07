@@ -27,6 +27,9 @@ namespace TextEditor.ViewModels
         private string _filePath;
         private string _tmpFilePath;
         private int _wordCount;
+        private int _line;
+        private int _column;
+        private int _position;
 
         public MainWindowViewModel(ISnapshotCare<string> snapshotCare, Func<string, ISaveFileDialogService> saveFileDialogServiceCreator, 
             Func<string, IOpenFileDialogService> openFileDialogServiceCreator, IEventAggregator eventAggregator, IMessageDialogService messageDialogService)
@@ -72,6 +75,37 @@ namespace TextEditor.ViewModels
             }
         }
 
+        public int Line
+        {
+            get => _line;
+            set
+            {
+                _line = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int Column
+        {
+            get => _column;
+            set
+            {
+                _column = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int Position
+        {
+            get => _position;
+            set
+            {
+                _position = value;
+                OnPropertyChanged();
+            }
+        }
+
+
         public ICommand SaveCommand { get; }
         public ICommand OpenCommand { get; }
         public ICommand NewFileCommand { get; }
@@ -88,6 +122,21 @@ namespace TextEditor.ViewModels
             CountWords();
 
             AutoSave();
+        }
+
+        public void SetLine(int line)
+        {
+            Line = line;
+        }
+
+        public void SetColumn(int column)
+        {
+            Column = column;
+        }
+
+        public void SetPosition(int position)
+        {
+            Position = position;
         }
 
         public async void LoadAsync()
@@ -110,6 +159,10 @@ namespace TextEditor.ViewModels
                 if (w.Length == 1 && (char.IsDigit(w[0]) || char.IsSeparator(w[0]) ||
                                       char.IsNumber(w[0]) || char.IsDigit(w[0]) ||
                                       char.IsPunctuation(w[0]) || char.IsSymbol(w[0])))
+                    return false;
+
+
+                if (w.Contains('\r') || w.Contains('\n'))
                     return false;
 
                 return true;

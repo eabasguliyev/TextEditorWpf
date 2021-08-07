@@ -27,9 +27,21 @@ namespace TextEditor
             this.Loaded += OnLoaded;
 
             this.TextBox.TextChanged += TextBoxOnTextChanged;
-
+            this.TextBox.SelectionChanged += TextBoxOnSelectionChanged;
 
             _eventAggregator.GetEvent<OnCloseWindowViewEvent>().Subscribe(OnCloseWindowView);
+        }
+
+        private void TextBoxOnSelectionChanged(object sender, RoutedEventArgs e)
+        {
+            var lineIndex = this.TextBox.GetLineIndexFromCharacterIndex(this.TextBox.SelectionStart) + 1;
+            var lineLength = this.TextBox.GetLineLength(lineIndex - 1);
+            var charIndex = this.TextBox.GetCharacterIndexFromLineIndex(lineIndex - 1) - this.TextBox.SelectionStart;
+
+            _viewModel.SetPosition(this.TextBox.SelectionStart + 1);
+            _viewModel.SetLine(lineIndex);
+            //_viewModel.SetColumn(this.TextBox.GetLineLength() - this.TextBox.GetCharacterIndexFromLineIndex());
+            _viewModel.SetColumn((lineLength - charIndex) / 2 + 1);
         }
 
         private void OnCloseWindowView()
