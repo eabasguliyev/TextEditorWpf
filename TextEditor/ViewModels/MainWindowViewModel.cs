@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using System.Windows.Input;
 using Dapper;
 using Microsoft.Extensions.Configuration;
@@ -164,6 +166,23 @@ namespace TextEditor.ViewModels
             await Task.Run(CreateTempFile);
         }
 
+        public async Task<List<string>> GetWrongWords()
+        {
+            var wordOperation = new WordOperation();
+
+            var words = wordOperation.SplitToWords(wordOperation.ClearText(Text), true);
+
+            var wrongWords = new List<string>();
+            foreach (var w in words)
+            {
+                var word = await _wordDataService.GetByNameAsync(w);
+
+                if (word == null)
+                    wrongWords.Add(w);
+            }
+
+            return wrongWords;
+        }
         private async Task CreateDatabaseSchema()
         {
             var dbName = "TextEditor";

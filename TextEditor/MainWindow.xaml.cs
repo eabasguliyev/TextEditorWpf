@@ -49,9 +49,11 @@ namespace TextEditor
             this.Close();
         }
 
-        private void TextBoxOnTextChanged(object sender, TextChangedEventArgs e)
+        private async void TextBoxOnTextChanged(object sender, TextChangedEventArgs e)
         {
             _viewModel.OnTextChanged();
+
+            //var wrongWords = await _viewModel.GetWrongWords();
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
