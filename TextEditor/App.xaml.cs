@@ -5,6 +5,7 @@ using System.Windows;
 using Autofac;
 using Microsoft.Extensions.Configuration;
 using TextEditor.Startup;
+using TextEditor.ViewModels;
 
 namespace TextEditor
 {
@@ -25,7 +26,9 @@ namespace TextEditor
             container.Resolve<SqlConnection>().ConnectionString = configuration.GetConnectionString("Master");
 
             var window = container.Resolve<MainWindow>();
-            
+
+            window.DataContext = container.Resolve<IMainWindowViewModel>();
+
             window.Show();
         }
     }

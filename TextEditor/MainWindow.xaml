@@ -3,10 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:local="clr-namespace:TextEditor"
         mc:Ignorable="d"
         FontSize="15"
         Title="{Binding FileName, Mode=OneWay, TargetNullValue='Notepad'}" Height="450" Width="800">
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="Loaded">
+            <b:InvokeCommandAction Command="{Binding LoadCommand}"/>
+        </b:EventTrigger>
+        <b:EventTrigger EventName="Closing">
+            <b:InvokeCommandAction Command="{Binding SaveChangesCommand}"/>
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
     <Window.InputBindings>
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewFileCommand}"/>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
@@ -27,7 +36,7 @@
                 <MenuItem Header="_Open" Command="{Binding OpenCommand}" InputGestureText="Ctrl+O"/>
                 <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGestureText="Ctrl+S"/>
                 <Separator/>
-                <MenuItem Header="_Close" Command="{Binding CloseCommand}"/>
+                <MenuItem Header="_Close" x:Name="CloseMenuItem" Click="CloseMenuItem_OnClick"/>
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem Header="_Back" Command="{Binding BackCommand}" InputGestureText="Ctrl+U"/>
@@ -35,7 +44,13 @@
             </MenuItem>
         </Menu>
         <TextBox Grid.Row="1" AcceptsReturn="True" x:Name="TextBox" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged, TargetNullValue=''}"
-                 IsUndoEnabled="False"/>
+                 IsUndoEnabled="False">
+            <b:Interaction.Triggers>
+                <b:EventTrigger EventName="TextChanged">
+                    <b:InvokeCommandAction Command="{Binding TextChangedCommand}"/>
+                </b:EventTrigger>
+            </b:Interaction.Triggers>
+        </TextBox>
 
         <StatusBar Grid.Row="2">
             <TextBlock>

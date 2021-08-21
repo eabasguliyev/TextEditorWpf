@@ -12,24 +12,12 @@ namespace TextEditor
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly IMainWindowViewModel _viewModel;
-        private readonly IEventAggregator _eventAggregator;
 
-        public MainWindow(IMainWindowViewModel viewModel, IEventAggregator eventAggregator)
+        public MainWindow()
         {
             InitializeComponent();
 
-            _viewModel = viewModel;
-            _eventAggregator = eventAggregator;
-
-            this.DataContext = _viewModel;
-
-            this.Loaded += OnLoaded;
-
-            this.TextBox.TextChanged += TextBoxOnTextChanged;
             this.TextBox.SelectionChanged += TextBoxOnSelectionChanged;
-
-            _eventAggregator.GetEvent<OnCloseWindowViewEvent>().Subscribe(OnCloseWindowView);
         }
 
         private void TextBoxOnSelectionChanged(object sender, RoutedEventArgs e)
@@ -38,32 +26,16 @@ namespace TextEditor
             var lineLength = this.TextBox.GetLineLength(lineIndex - 1);
             var charIndex = this.TextBox.GetCharacterIndexFromLineIndex(lineIndex - 1) - this.TextBox.SelectionStart;
 
-            _viewModel.SetPosition(this.TextBox.SelectionStart + 1);
-            _viewModel.SetLine(lineIndex);
+            var position = this.TextBox.SelectionStart + 1;
+            var column = (lineLength - charIndex) / 2 + 1;
+            
             //_viewModel.SetColumn(this.TextBox.GetLineLength() - this.TextBox.GetCharacterIndexFromLineIndex());
-            _viewModel.SetColumn((lineLength - charIndex) / 2 + 1);
-        }
 
-        private void OnCloseWindowView()
+            ((IMainWindowViewModel)this.DataContext).SetEditorStatusData(position, lineIndex, column);
+        }
+        private void CloseMenuItem_OnClick(object sender, RoutedEventArgs e)
         {
             this.Close();
-        }
-
-        private async void TextBoxOnTextChanged(object sender, TextChangedEventArgs e)
-        {
-            _viewModel.OnTextChanged();
-
-            //var wrongWords = await _viewModel.GetWrongWords();
-        }
-
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            _viewModel.LoadAsync();
-        }
-
-        protected override void OnClosing(CancelEventArgs e)
-        {
-            _eventAggregator.GetEvent<OnSaveChangesEvent>().Publish();
         }
     }
 }

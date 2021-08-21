@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -11,6 +12,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using Prism.Commands;
 using Prism.Events;
+using TextEditor.Annotations;
 using TextEditor.Data;
 using TextEditor.DatabaseSchemaBuilder;
 using TextEditor.Enums;
@@ -41,11 +43,15 @@ namespace TextEditor.ViewModels
         private int _line;
         private int _column;
         private int _position;
+        private bool _autoSave;
+        private readonly Timer _timer;
 
         public MainWindowViewModel(ISnapshotCare<string> snapshotCare, Func<string, ISaveFileDialogService> saveFileDialogServiceCreator, 
             Func<string, IOpenFileDialogService> openFileDialogServiceCreator, IEventAggregator eventAggregator, IMessageDialogService messageDialogService,
             SqlConnection sqlConnection, IWordDataService wordDataService)
         {
+            _autoSave = false;
+
             _snapshotCare = snapshotCare;
             _saveFileDialogServiceCreator = saveFileDialogServiceCreator;
             _openFileDialogServiceCreator = openFileDialogServiceCreator;
@@ -61,9 +67,19 @@ namespace TextEditor.ViewModels
             NewFileCommand = new DelegateCommand(CreateNewFile);
             BackCommand = new DelegateCommand(Back);
             ForwardCommand = new DelegateCommand(Forward);
-            CloseCommand = new DelegateCommand(Close);
+            LoadCommand = new DelegateCommand(LoadAsync);
+            SaveChangesCommand = new DelegateCommand(OnSaveChanges);
+            TextChangedCommand = new DelegateCommand(OnTextChanged);
 
-            _eventAggregator.GetEvent<OnSaveChangesEvent>().Subscribe(OnSaveChanges);
+            _timer = new Timer(async (obj) =>
+            {
+                if (!_autoSave)
+                    return;
+
+                await AutoSave();
+            }, null, 2000, 5000);
+
+            //_eventAggregator.GetEvent<OnSaveChangesEvent>().Subscribe(OnSaveChanges);
         }
 
         public string Text
@@ -121,11 +137,13 @@ namespace TextEditor.ViewModels
 
 
         public ICommand SaveCommand { get; }
+        public ICommand LoadCommand { get; }
         public ICommand OpenCommand { get; }
         public ICommand NewFileCommand { get; }
-        public ICommand CloseCommand { get; }
         public ICommand BackCommand { get; }
         public ICommand ForwardCommand { get; }
+        public ICommand SaveChangesCommand { get; }
+        public ICommand TextChangedCommand { get; }
 
 
         public void OnTextChanged()
@@ -133,27 +151,10 @@ namespace TextEditor.ViewModels
             _snapshotCare.CreateSnapshot(Text);
 
             HasChanges = true;
+            _autoSave = true;
             
             CountWords();
-
-            AutoSave();
         }
-
-        public void SetLine(int line)
-        {
-            Line = line;
-        }
-
-        public void SetColumn(int column)
-        {
-            Column = column;
-        }
-
-        public void SetPosition(int position)
-        {
-            Position = position;
-        }
-
         public async void LoadAsync()
         {
             await CreateDatabaseSchema();
@@ -183,6 +184,14 @@ namespace TextEditor.ViewModels
 
             return wrongWords;
         }
+
+        public void SetEditorStatusData(int position, int line, int column)
+        {
+            Position = position;
+            Line = line;
+            Column = column;
+        }
+
         private async Task CreateDatabaseSchema()
         {
             var dbName = "TextEditor";
@@ -250,11 +259,6 @@ namespace TextEditor.ViewModels
             WordCount = wordCounter.GetWordCount(Text);
         }
 
-        private void Close()
-        {
-            _eventAggregator.GetEvent<OnCloseWindowViewEvent>().Publish();
-        }
-
         private void OnSaveChanges()
         {
             if (HasChanges)
@@ -269,11 +273,14 @@ namespace TextEditor.ViewModels
             }
             DeleteOldTempFile(_tmpFilePath);
         }
-
-        private async void AutoSave()
+        
+        private async Task AutoSave()
         {
             if (_tmpFilePath == null)
                 return;
+
+            _autoSave = false;
+
             await SaveData(_tmpFilePath, Text);
         }
 
